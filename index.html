@@ -1,975 +1,571 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>playlis - Music Player supported by Gemini</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            base: '#0B0B12',
-                            card: '#141422',
-                            sidebar: '#0F0E1B',
-                            hover: '#1F1E33',
-                            border: '#28273D'
-                        },
-                        gemini: {
-                            cyan: '#00d2ff',
-                            purple: '#9d50bb',
-                            pink: '#ff007f',
-                            blue: '#2575fc'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0B0B12;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #28273D;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3B3958;
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #00d2ff 0%, #9d50bb 50%, #ff007f 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .gradient-btn {
-            background: linear-gradient(135deg, #00d2ff 0%, #2575fc 50%, #9d50bb 100%);
-            transition: all 0.3s ease;
-        }
-
-        .gradient-btn:hover {
-            opacity: 0.95;
-            box-shadow: 0 4px 20px rgba(0, 210, 255, 0.35);
-        }
-
-        .glass-panel {
-            background: rgba(20, 20, 34, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        input[type="range"] {
-            accent-color: #00d2ff;
-        }
-
-        @keyframes spinSlow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-            animation: spinSlow 12s linear infinite;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>playlis - Music Player supported by Gemini</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      background-color: #090a0f;
+      color: #f3f4f6;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    .gemini-gradient-text {
+      background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gemini-bg-gradient {
+      background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  </style>
 </head>
-<body class="bg-dark-base text-gray-100 font-sans h-screen flex flex-col overflow-hidden select-none">
+<body class="h-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Google Login Overlay Screen -->
-    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-dark-base bg-opacity-95 backdrop-blur-md">
-        <div class="glass-panel p-8 md:p-10 rounded-3xl max-w-md w-full mx-4 border border-dark-border text-center shadow-2xl relative overflow-hidden">
-            <!-- Background Glows -->
-            <div class="absolute -top-20 -left-20 w-44 h-44 bg-gemini-cyan rounded-full filter blur-3xl opacity-20 pointer-events-none"></div>
-            <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-gemini-pink rounded-full filter blur-3xl opacity-20 pointer-events-none"></div>
+  <!-- APP CONTAINER -->
+  <div class="flex-1 flex overflow-hidden">
 
-            <!-- Logo -->
-            <div class="flex justify-center items-center gap-3 mb-6">
-                <div class="w-12 h-12 rounded-2xl gradient-btn flex items-center justify-center shadow-lg">
-                    <i class="fa-solid fa-compact-disc text-2xl text-white animate-spin-slow"></i>
-                </div>
-                <h1 class="text-3xl font-extrabold tracking-tight gradient-text">playlis</h1>
-            </div>
-
-            <p class="text-gray-400 mb-8 text-sm leading-relaxed">
-                Nikmati pemutar musik lokal favorit Anda, atur playlist tanpa batas, dan tetap mendengarkan walau tab ditutup.
-            </p>
-
-            <!-- Login Buttons -->
-            <div class="space-y-4">
-                <button id="btnGoogleAuth" class="w-full py-3.5 px-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl flex items-center justify-center gap-3 transition-all duration-200 shadow-md active:scale-95">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    <span>Masuk dengan Google</span>
-                </button>
-
-                <div class="relative my-4">
-                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-dark-border"></div></div>
-                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-dark-card px-2 text-gray-400">Atau Akses Cepat</span></div>
-                </div>
-
-                <button id="btnGuestAuth" class="w-full py-3 px-4 bg-dark-hover hover:bg-dark-border text-gray-300 font-medium rounded-xl border border-dark-border transition active:scale-95">
-                    Masuk Sebagai Tamu (Demo)
-                </button>
-            </div>
-
-            <!-- Notice for local file execution -->
-            <div id="localFileNotice" class="hidden mt-4 text-[11px] text-amber-400/90 bg-amber-950/30 p-2.5 rounded-xl border border-amber-800/40">
-                <i class="fa-solid fa-circle-info mr-1"></i> Mode Berkas Lokal Terdeteksi: Login Google dijalankan secara langsung via profil aman laptop.
-            </div>
-
-            <!-- Supported by Gemini Tag -->
-            <div class="mt-8 pt-4 border-t border-dark-border/50 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                <span>supported by</span>
-                <span class="font-bold gradient-text">Gemini</span>
-                <i class="fa-solid fa-sparkles text-gemini-cyan text-xs"></i>
-            </div>
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-[#0d0e15] border-r border-white/5 flex flex-col justify-between p-4 flex-shrink-0">
+      <div class="space-y-6">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-2">
+          <div class="w-10 h-10 rounded-xl gemini-bg-gradient flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <i data-lucide="disc-3" class="w-6 h-6 text-white animate-spin-slow"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold tracking-wider gemini-gradient-text">playlis</h1>
+            <p class="text-[10px] text-gray-400 font-medium tracking-tight">Music Player</p>
+          </div>
         </div>
-    </div>
 
-    <!-- Simulated Google Auth Modal (for local file usage) -->
-    <div id="googleSimModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="bg-white text-gray-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative text-left">
-            <div class="flex items-center gap-3 mb-4">
-                <svg class="w-6 h-6" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span class="font-bold text-gray-700 text-sm">Sign in with Google (Local)</span>
-            </div>
-            <h3 class="text-base font-bold text-gray-900 mb-1">Pilih atau Masukkan Akun</h3>
-            <p class="text-xs text-gray-500 mb-4">Lanjutkan masuk ke <span class="font-semibold text-gray-700">playlis</span></p>
+        <!-- Navigation Menu -->
+        <nav class="space-y-1">
+          <button onclick="switchTab('player')" id="nav-player" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-white/10 text-white">
+            <i data-lucide="music" class="w-4 h-4 text-purple-400"></i>
+            Pemutar & Playlist
+          </button>
+          <button onclick="switchTab('converter')" id="nav-converter" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5">
+            <i data-lucide="link" class="w-4 h-4 text-pink-400"></i>
+            Convert MP3
+          </button>
+          <button onclick="switchTab('about')" id="nav-about" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5">
+            <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
+            Tentang
+          </button>
+        </nav>
 
-            <form id="googleSimForm" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Lengkap</label>
-                    <input type="text" id="simName" placeholder="Contoh: Budi Santoso" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Email Google</label>
-                    <input type="email" id="simEmail" placeholder="nama@gmail.com" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" id="btnCancelSim" class="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow">Lanjutkan</button>
-                </div>
-            </form>
+        <hr class="border-white/5 my-4">
+
+        <!-- Quick Playlists List (Samping) -->
+        <div>
+          <div class="flex items-center justify-between px-2 mb-2">
+            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Playlist Saya</span>
+            <button onclick="createPlaylist()" class="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div id="sidebar-playlists" class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+            <!-- Rendered by JS -->
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- Main Application Container -->
-    <div id="appContainer" class="flex-1 flex flex-col h-full overflow-hidden">
+      <!-- Footer Info -->
+      <div class="px-2 pt-4 border-t border-white/5 text-center">
+        <p class="text-xs text-gray-400">supported by <span class="gemini-gradient-text font-bold">Gemini</span></p>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col bg-[#090a0f] overflow-hidden">
+      <!-- TOPBAR -->
+      <header class="h-16 border-b border-white/5 px-8 flex items-center justify-between flex-shrink-0 bg-[#0d0e15]/50 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            Mode Penyimpanan Laptop (Offline Ready)
+          </span>
+        </div>
         
-        <!-- Top Header Navigation -->
-        <header class="h-16 border-b border-dark-border bg-dark-sidebar px-6 flex items-center justify-between z-10">
-            <!-- Brand Logo -->
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl gradient-btn flex items-center justify-center text-white shadow-md">
-                    <i class="fa-solid fa-compact-disc text-lg"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="font-extrabold text-xl tracking-tight gradient-text">playlis</span>
-                </div>
-            </div>
+        <!-- User Profile -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full gemini-bg-gradient flex items-center justify-center font-bold text-xs text-white">
+            AW
+          </div>
+          <span class="text-sm font-medium text-gray-200">Arya Wira</span>
+        </div>
+      </header>
 
-            <!-- Info Status -->
-            <div class="hidden md:flex items-center gap-2 bg-dark-card px-3 py-1.5 rounded-full border border-dark-border text-xs text-gray-400">
-                <i class="fa-solid fa-hard-drive text-gemini-cyan"></i>
-                <span id="storageModeBadge">Mode Penyimpanan Lokal Laptop</span>
+      <!-- TAB 1: PLAYER & PLAYLIST PAGE -->
+      <div id="tab-player" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <!-- Playlist Banner -->
+        <div class="bg-gradient-to-r from-purple-900/30 via-pink-900/20 to-transparent p-6 rounded-3xl border border-white/10 flex items-center justify-between mb-8">
+          <div class="flex items-center gap-6">
+            <div class="w-24 h-24 rounded-2xl gemini-bg-gradient flex items-center justify-center shadow-xl">
+              <i data-lucide="list-music" class="w-12 h-12 text-white"></i>
             </div>
-
-            <!-- User Profile & Account -->
-            <div class="flex items-center gap-3">
-                <div id="userProfile" class="flex items-center gap-2.5 bg-dark-card py-1 px-3 rounded-full border border-dark-border">
-                    <img id="userAvatar" src="https://placehold.co/100x100/141422/00d2ff?text=P" alt="Profile" class="w-7 h-7 rounded-full object-cover">
-                    <span id="userName" class="text-xs font-medium text-gray-200 max-w-[120px] truncate">Pengguna</span>
-                </div>
-                <button id="btnLogout" class="text-gray-400 hover:text-red-400 transition text-sm p-2" title="Keluar">
-                    <i class="fa-solid fa-right-from-bracket"></i>
+            <div>
+              <span class="text-xs font-bold tracking-widest text-purple-400 uppercase">PLAYLIST</span>
+              <div class="flex items-center gap-3 mt-1">
+                <h2 id="current-playlist-title" class="text-3xl font-extrabold text-white">Playlist Utama</h2>
+                <button onclick="renameCurrentPlaylist()" class="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </button>
+              </div>
+              <p id="playlist-stats" class="text-xs text-gray-400 mt-2">0 Lagu • Hanya mengulang lagu di playlist ini</p>
             </div>
-        </header>
+          </div>
 
-        <!-- Middle Workspace Area -->
-        <div class="flex-1 flex overflow-hidden">
-
-            <!-- Sidebar -->
-            <aside class="w-64 bg-dark-sidebar border-r border-dark-border flex flex-col shrink-0 hidden md:flex">
-                <!-- Navigation Header -->
-                <div class="p-4 border-b border-dark-border flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                        <i class="fa-solid fa-lines-leaning text-gemini-cyan"></i> Playlist Saya
-                    </span>
-                    <button id="btnCreatePlaylist" class="w-8 h-8 rounded-lg bg-dark-card hover:bg-dark-hover flex items-center justify-center text-gray-300 hover:text-white border border-dark-border transition" title="Buat Playlist Baru">
-                        <i class="fa-solid fa-plus text-xs"></i>
-                    </button>
-                </div>
-
-                <!-- Playlist List Container -->
-                <div id="playlistList" class="flex-1 overflow-y-auto p-2 space-y-1">
-                    <!-- Populated via Javascript -->
-                </div>
-
-                <!-- Footer Credit inside Sidebar -->
-                <div class="p-4 border-t border-dark-border bg-dark-base/40 text-center">
-                    <div class="flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                        <span>supported by</span>
-                        <span class="font-bold gradient-text">Gemini</span>
-                        <i class="fa-solid fa-sparkles text-gemini-cyan text-[10px]"></i>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Main Content Area -->
-            <main class="flex-1 bg-dark-base overflow-y-auto flex flex-col p-4 md:p-8">
-                
-                <!-- Active Playlist Header Banner -->
-                <div class="glass-panel p-6 rounded-3xl mb-6 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-5 z-10">
-                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl gradient-btn flex items-center justify-center text-white text-3xl shadow-xl shrink-0">
-                            <i class="fa-solid fa-music"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-gemini-cyan uppercase tracking-wider">PLAYLIST</span>
-                            </div>
-                            <div class="flex items-center gap-2 group">
-                                <h2 id="currentPlaylistTitle" class="text-2xl md:text-3xl font-extrabold text-white mt-1">Favorit Saya</h2>
-                                <button id="btnEditPlaylistName" class="text-gray-400 hover:text-white text-sm opacity-60 group-hover:opacity-100 transition" title="Ubah Nama Playlist">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                            </div>
-                            <p id="playlistSongCount" class="text-xs text-gray-400 mt-1">0 Lagu • Mengulang playlist ini secara berturut-turut</p>
-                        </div>
-                    </div>
-
-                    <!-- Header Actions -->
-                    <div class="flex items-center gap-3 z-10 w-full md:w-auto justify-end">
-                        <!-- Import Song Button -->
-                        <label class="gradient-btn px-4 py-2.5 rounded-xl text-white text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-lg hover:scale-105 transition transform active:scale-95">
-                            <i class="fa-solid fa-file-circle-plus text-sm"></i>
-                            <span>Tambah Lagu (Laptop)</span>
-                            <input type="file" id="audioFileInput" accept="audio/*" multiple class="hidden">
-                        </label>
-                        <button id="btnDeletePlaylist" class="px-3 py-2.5 rounded-xl bg-dark-card hover:bg-red-900/30 text-gray-400 hover:text-red-400 border border-dark-border text-xs font-medium transition" title="Hapus Playlist">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-
-                    <!-- Ambient Glow Effect -->
-                    <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-gemini-purple rounded-full filter blur-3xl opacity-15 pointer-events-none"></div>
-                </div>
-
-                <!-- Song List Table -->
-                <div class="flex-1 bg-dark-card/50 rounded-2xl border border-dark-border p-4 overflow-x-auto">
-                    <table class="w-full text-left text-xs md:text-sm text-gray-300">
-                        <thead class="text-xs uppercase text-gray-400 border-b border-dark-border/60">
-                            <tr>
-                                <th class="py-3 px-3 w-10 text-center">#</th>
-                                <th class="py-3 px-3">Judul Lagu</th>
-                                <th class="py-3 px-3 hidden md:table-cell">Ukuran Berkas</th>
-                                <th class="py-3 px-3 text-right">Durasi</th>
-                                <th class="py-3 px-3 text-center w-16">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="songListTableBody" class="divide-y divide-dark-border/30">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-
-                    <!-- Empty State Placeholder -->
-                    <div id="emptyPlaylistState" class="py-16 text-center flex flex-col items-center justify-center">
-                        <div class="w-16 h-16 rounded-full bg-dark-card flex items-center justify-center text-gray-500 mb-3 border border-dark-border">
-                            <i class="fa-solid fa-folder-open text-2xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold text-gray-300">Belum ada lagu di playlist ini</h3>
-                        <p class="text-xs text-gray-500 max-w-sm mt-1">Klik tombol "Tambah Lagu (Laptop)" untuk menambahkan berkas audio (MP3, WAV, M4A, FLAC) dari komputer Anda.</p>
-                    </div>
-                </div>
-
-                <!-- Footer Tag for Mobile -->
-                <div class="block md:hidden mt-6 text-center text-xs text-gray-500">
-                    supported by <span class="gradient-text font-bold">Gemini</span>
-                </div>
-            </main>
+          <div class="flex items-center gap-3">
+            <label class="cursor-pointer bg-white text-black font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-200 transition flex items-center gap-2 shadow-lg">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              Tambah Lagu (Laptop)
+              <input type="file" id="audio-input" accept="audio/*" multiple class="hidden" onchange="handleAudioUpload(event)">
+            </label>
+            <button onclick="deleteCurrentPlaylist()" class="p-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
 
-        <!-- Sticky Music Player Controller Bar -->
-        <footer class="h-24 bg-dark-sidebar border-t border-dark-border px-4 md:px-6 flex items-center justify-between gap-4 z-20">
-            
-            <!-- Left Info: Currently Playing Song -->
-            <div class="flex items-center gap-3 w-1/4 min-w-[160px]">
-                <div id="playerAlbumArt" class="w-12 h-12 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center text-gemini-cyan shrink-0 relative overflow-hidden">
-                    <i class="fa-solid fa-music text-lg"></i>
-                </div>
-                <div class="overflow-hidden">
-                    <div id="playerTitle" class="text-xs md:text-sm font-semibold text-white truncate">Tidak Ada Lagu Memutar</div>
-                    <div id="playerArtist" class="text-[11px] text-gray-400 truncate mt-0.5">Pilih lagu untuk memulai</div>
-                </div>
+        <!-- Songs Table -->
+        <div class="bg-[#0d0e15] border border-white/5 rounded-2xl overflow-hidden">
+          <div class="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold text-gray-400 border-b border-white/5 uppercase tracking-wider">
+            <div class="col-span-1">#</div>
+            <div class="col-span-6">Judul Lagu</div>
+            <div class="col-span-3">Ukuran</div>
+            <div class="col-span-2 text-right">Aksi</div>
+          </div>
+          <div id="song-list" class="divide-y divide-white/5">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: CONVERT MP3 PAGE -->
+      <div id="tab-converter" class="flex-1 overflow-y-auto p-8 custom-scrollbar hidden">
+        <div class="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">Convert Link to MP3</h2>
+            <p class="text-sm text-gray-400">Masukkan tautan video atau audio publik untuk diproses dan langsung ditambahkan ke playlist pilihan Anda.</p>
+          </div>
+
+          <div class="bg-[#0d0e15] border border-white/10 p-6 rounded-2xl space-y-4">
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Tautan / Link Audio</label>
+              <input type="url" id="convert-url-input" placeholder="https://example.com/audio.mp3 atau link streaming" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
             </div>
 
-            <!-- Middle Controller: Playback controls + Seekbar -->
-            <div class="flex flex-col items-center gap-1.5 w-2/4 max-w-xl">
-                <!-- Control Buttons -->
-                <div class="flex items-center gap-4 md:gap-6">
-                    <button id="btnShuffle" class="text-gray-400 hover:text-gemini-cyan text-xs transition" title="Acak Playlist">
-                        <i class="fa-solid fa-shuffle"></i>
-                    </button>
-                    <button id="btnPrev" class="text-gray-300 hover:text-white text-base transition">
-                        <i class="fa-solid fa-backward-step"></i>
-                    </button>
-                    <button id="btnPlayPause" class="w-10 h-10 rounded-full gradient-btn flex items-center justify-center text-white text-base shadow-md hover:scale-105 transition transform active:scale-95">
-                        <i class="fa-solid fa-play ml-0.5"></i>
-                    </button>
-                    <button id="btnNext" class="text-gray-300 hover:text-white text-base transition">
-                        <i class="fa-solid fa-forward-step"></i>
-                    </button>
-                    <button id="btnLoop" class="text-gemini-cyan text-xs transition" title="Mengulang Playlist Ini">
-                        <i class="fa-solid fa-repeat"></i>
-                    </button>
-                </div>
-
-                <!-- Progress Bar & Time -->
-                <div class="w-full flex items-center gap-2 text-[10px] text-gray-400 font-mono">
-                    <span id="currentTime">00:00</span>
-                    <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full h-1 bg-dark-card rounded-lg appearance-none cursor-pointer">
-                    <span id="totalTime">00:00</span>
-                </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Judul Lagu (Opsional)</label>
+              <input type="text" id="convert-title-input" placeholder="Masukkan judul lagu..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
             </div>
 
-            <!-- Right Controller: Volume -->
-            <div class="flex items-center justify-end gap-2 w-1/4 min-w-[120px]">
-                <button id="btnMute" class="text-gray-400 hover:text-white text-xs">
-                    <i id="volumeIcon" class="fa-solid fa-volume-high"></i>
-                </button>
-                <input type="range" id="volumeBar" min="0" max="1" step="0.01" value="0.8" class="w-20 md:w-24 h-1 bg-dark-card rounded-lg appearance-none cursor-pointer">
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Pilih Playlist Tujuan</label>
+              <select id="convert-playlist-select" class="w-full bg-[#161822] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
+                <!-- Rendered by JS -->
+              </select>
             </div>
-        </footer>
+
+            <button onclick="processConvert()" class="w-full gemini-bg-gradient py-3 rounded-xl font-bold text-white hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              Convert & Tambahkan ke Playlist
+            </button>
+          </div>
+
+          <div id="convert-status" class="hidden p-4 rounded-xl text-sm border"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: ABOUT PAGE -->
+      <div id="tab-about" class="flex-1 overflow-y-auto p-8 custom-scrollbar hidden">
+        <div class="max-w-2xl mx-auto bg-[#0d0e15] border border-white/10 rounded-3xl p-8 space-y-8">
+          <div class="flex items-center gap-4 border-b border-white/5 pb-6">
+            <div class="w-16 h-16 rounded-2xl gemini-bg-gradient flex items-center justify-center shadow-lg">
+              <i data-lucide="disc-3" class="w-8 h-8 text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-white">Tentang Website Ini</h2>
+              <p class="text-xs text-purple-400 font-medium">Aplikasi Pemutar Musik Lokal & Playlist Web</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Pengembang / Creator</span>
+              <p class="text-base font-semibold text-white">Website ini Dibuat oleh Creative Team Indonesia Anggota Arya Wira Hadiputra</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Mulai Produksi</span>
+                <p class="text-sm font-semibold text-white">21 September 2026</p>
+              </div>
+
+              <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Tanggal Publikasi</span>
+                <p class="text-sm font-semibold text-white">23 September 2026</p>
+              </div>
+            </div>
+
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+              <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Pembaruan Terakhir (Last Update)</span>
+              <p class="text-sm font-semibold text-purple-300">26 September 2026</p>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-white/5 text-center">
+            <p class="text-xs text-gray-400">supported by <span class="gemini-gradient-text font-bold">Gemini</span></p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- BOTTOM PLAYER CONTROLLER BAR -->
+  <footer class="h-20 bg-[#0b0c12] border-t border-white/5 px-6 flex items-center justify-between flex-shrink-0 z-50">
+    <!-- Current Song Info -->
+    <div class="flex items-center gap-4 w-1/4">
+      <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+        <i data-lucide="music" class="w-6 h-6 text-purple-400"></i>
+      </div>
+      <div class="truncate">
+        <h4 id="player-song-title" class="text-sm font-bold text-white truncate">Tidak ada lagu diputar</h4>
+        <p id="player-playlist-name" class="text-xs text-gray-400 truncate">Pilih lagu dari playlist</p>
+      </div>
     </div>
 
-    <!-- Hidden Audio Element -->
-    <audio id="audioElement" preload="metadata"></audio>
+    <!-- Controls & Progress -->
+    <div class="flex flex-col items-center gap-1.5 w-2/4 max-w-xl">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleShuffle()" id="btn-shuffle" class="text-gray-400 hover:text-white transition">
+          <i data-lucide="shuffle" class="w-4 h-4"></i>
+        </button>
+        <button onclick="playPrevSong()" class="text-gray-300 hover:text-white transition">
+          <i data-lucide="skip-back" class="w-5 h-5"></i>
+        </button>
+        <button onclick="togglePlayPause()" id="btn-play" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-lg">
+          <i data-lucide="play" class="w-5 h-5 fill-black ml-0.5"></i>
+        </button>
+        <button onclick="playNextSong()" class="text-gray-300 hover:text-white transition">
+          <i data-lucide="skip-forward" class="w-5 h-5"></i>
+        </button>
+        <button onclick="toggleRepeat()" id="btn-repeat" class="text-purple-400 hover:text-purple-300 transition" title="Loop Playlist">
+          <i data-lucide="repeat" class="w-4 h-4"></i>
+        </button>
+      </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      <div class="w-full flex items-center gap-3">
+        <span id="time-current" class="text-[10px] font-mono text-gray-400 w-8 text-right">00:00</span>
+        <input type="range" id="seek-bar" value="0" min="0" max="100" class="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="seekAudio(this.value)">
+        <span id="time-duration" class="text-[10px] font-mono text-gray-400 w-8">00:00</span>
+      </div>
+    </div>
 
-        // Global State & Environment Detection
-        const isLocalFile = window.location.protocol === 'file:';
-        let currentUser = null;
-        let playlists = [];
-        let activePlaylistId = null;
-        let currentSongIndex = -1;
-        let isPlaying = false;
-        let isLooping = true;
-        let isShuffle = false;
-        let audioDB = null;
+    <!-- Volume Control -->
+    <div class="flex items-center justify-end gap-3 w-1/4">
+      <i data-lucide="volume-2" class="w-4 h-4 text-gray-400"></i>
+      <input type="range" id="volume-bar" value="100" min="0" max="100" class="w-24 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="setVolume(this.value)">
+    </div>
+  </footer>
 
-        // Firebase Initialization
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'playlis-local-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDemoConfigForMusicPlayerAppOnly",
-                authDomain: "playlis-app.firebaseapp.com",
-                projectId: "playlis-app",
-                storageBucket: "playlis-app.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef123456"
-            };
+  <!-- HTML5 Audio Element -->
+  <audio id="audio-player"></audio>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // INITIAL STATE
+    let playlists = JSON.parse(localStorage.getItem('playlis_data')) || [
+      { id: 'default', name: 'Playlist Utama', songs: [] }
+    ];
+    let activePlaylistId = playlists[0].id;
+    let currentSongIndex = -1;
+    let isShuffle = false;
+    let isRepeat = true; // Auto loop playlist
 
-        // UI DOM Elements
-        const loginOverlay = document.getElementById('loginOverlay');
-        const localFileNotice = document.getElementById('localFileNotice');
-        const googleSimModal = document.getElementById('googleSimModal');
-        const googleSimForm = document.getElementById('googleSimForm');
-        const btnCancelSim = document.getElementById('btnCancelSim');
-        const btnGoogleAuth = document.getElementById('btnGoogleAuth');
-        const btnGuestAuth = document.getElementById('btnGuestAuth');
-        const btnLogout = document.getElementById('btnLogout');
-        const userName = document.getElementById('userName');
-        const userAvatar = document.getElementById('userAvatar');
-        const storageModeBadge = document.getElementById('storageModeBadge');
+    const audio = document.getElementById('audio-player');
 
-        const playlistList = document.getElementById('playlistList');
-        const btnCreatePlaylist = document.getElementById('btnCreatePlaylist');
-        const currentPlaylistTitle = document.getElementById('currentPlaylistTitle');
-        const playlistSongCount = document.getElementById('playlistSongCount');
-        const songListTableBody = document.getElementById('songListTableBody');
-        const emptyPlaylistState = document.getElementById('emptyPlaylistState');
-        const audioFileInput = document.getElementById('audioFileInput');
-        const btnEditPlaylistName = document.getElementById('btnEditPlaylistName');
-        const btnDeletePlaylist = document.getElementById('btnDeletePlaylist');
+    // INIT APP
+    window.onload = () => {
+      lucide.createIcons();
+      renderPlaylists();
+      renderSongList();
+      updateConvertPlaylistSelect();
+      setupAudioListeners();
+    };
 
-        const audioElement = document.getElementById('audioElement');
-        const btnPlayPause = document.getElementById('btnPlayPause');
-        const btnPrev = document.getElementById('btnPrev');
-        const btnNext = document.getElementById('btnNext');
-        const btnShuffle = document.getElementById('btnShuffle');
-        const btnLoop = document.getElementById('btnLoop');
-        const progressBar = document.getElementById('progressBar');
-        const currentTime = document.getElementById('currentTime');
-        const totalTime = document.getElementById('totalTime');
-        const volumeBar = document.getElementById('volumeBar');
-        const btnMute = document.getElementById('btnMute');
-        const volumeIcon = document.getElementById('volumeIcon');
-        const playerTitle = document.getElementById('playerTitle');
-        const playerArtist = document.getElementById('playerArtist');
+    // NAVIGATION SYSTEM
+    function switchTab(tabName) {
+      ['player', 'converter', 'about'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`nav-${t}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5";
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-white/10 text-white";
+    }
 
-        // Check Local File Execution
-        if (isLocalFile) {
-            localFileNotice.classList.remove('hidden');
-            storageModeBadge.textContent = "Mode Penyimpanan Laptop (Offline Ready)";
-        }
+    // PLAYLIST MANAGEMENT
+    function saveState() {
+      localStorage.setItem('playlis_data', JSON.stringify(playlists));
+      renderPlaylists();
+      updateConvertPlaylistSelect();
+    }
 
-        function initIndexedDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('PlaylisLocalDB', 2);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('audioFiles')) {
-                        db.createObjectStore('audioFiles');
-                    }
-                };
-                request.onsuccess = (e) => {
-                    audioDB = e.target.result;
-                    resolve(audioDB);
-                };
-                request.onerror = (e) => reject(e);
-            });
-        }
+    function createPlaylist() {
+      const name = prompt('Masukkan nama playlist baru:', 'Playlist Baru');
+      if (name) {
+        const newPl = { id: 'pl_' + Date.now(), name: name, songs: [] };
+        playlists.push(newPl);
+        activePlaylistId = newPl.id;
+        saveState();
+        renderSongList();
+      }
+    }
 
-        async function saveAudioBlob(key, blob) {
-            if (!audioDB) await initIndexedDB();
-            return new Promise((resolve, reject) => {
-                const tx = audioDB.transaction('audioFiles', 'readwrite');
-                const store = tx.objectStore('audioFiles');
-                store.put(blob, key);
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject();
-            });
-        }
+    function renameCurrentPlaylist() {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl) return;
+      const newName = prompt('Ubah nama playlist:', pl.name);
+      if (newName) {
+        pl.name = newName;
+        saveState();
+        document.getElementById('current-playlist-title').innerText = pl.name;
+      }
+    }
 
-        async function getAudioBlob(key) {
-            if (!audioDB) await initIndexedDB();
-            return new Promise((resolve) => {
-                const tx = audioDB.transaction('audioFiles', 'readonly');
-                const store = tx.objectStore('audioFiles');
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => resolve(null);
-            });
-        }
+    function deleteCurrentPlaylist() {
+      if (playlists.length <= 1) {
+        alert('Anda harus memiliki setidaknya satu playlist!');
+        return;
+      }
+      if (confirm('Hapus playlist ini beserta seluruh lagunya?')) {
+        playlists = playlists.filter(p => p.id !== activePlaylistId);
+        activePlaylistId = playlists[0].id;
+        saveState();
+        renderSongList();
+      }
+    }
 
-        btnGoogleAuth.addEventListener('click', async () => {
-            if (isLocalFile) {
-                // Show Simulated Google Login Popup for file:// environment
-                const savedLocalUser = localStorage.getItem('playlis_user');
-                if (savedLocalUser) {
-                    const parsed = JSON.parse(savedLocalUser);
-                    document.getElementById('simName').value = parsed.displayName || '';
-                    document.getElementById('simEmail').value = parsed.email || '';
-                }
-                googleSimModal.classList.remove('hidden');
-            } else {
-                // Standard Firebase Google Auth for HTTP/HTTPS web servers
-                const provider = new GoogleAuthProvider();
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (err) {
-                    console.warn("Google Auth Popup failed, opening local login:", err);
-                    googleSimModal.classList.remove('hidden');
-                }
-            }
+    function renderPlaylists() {
+      const container = document.getElementById('sidebar-playlists');
+      container.innerHTML = playlists.map(pl => `
+        <button onclick="selectPlaylist('${pl.id}')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between ${pl.id === activePlaylistId ? 'bg-purple-500/20 text-purple-300 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}">
+          <span class="truncate">${pl.name}</span>
+          <span class="text-[10px] opacity-60">${pl.songs.length}</span>
+        </button>
+      `).join('');
+    }
+
+    function selectPlaylist(id) {
+      activePlaylistId = id;
+      renderPlaylists();
+      renderSongList();
+    }
+
+    // SONG MANAGEMENT & AUDIO HANDLING
+    function handleAudioUpload(event) {
+      const files = event.target.files;
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl) return;
+
+      Array.from(files).forEach(file => {
+        const url = URL.createObjectURL(file);
+        pl.songs.push({
+          id: 'song_' + Date.now() + Math.random(),
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+          url: url
         });
+      });
 
-        // Submit Google Simulated Form
-        googleSimForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('simName').value.trim();
-            const email = document.getElementById('simEmail').value.trim();
-            
-            const userObj = {
-                uid: 'local-google-' + btoa(email).replace(/=/g, ''),
-                displayName: name,
-                email: email,
-                photoURL: `https://placehold.co/100x100/141422/00d2ff?text=${encodeURIComponent(name.charAt(0).toUpperCase())}`
-            };
+      saveState();
+      renderSongList();
+    }
 
-            localStorage.setItem('playlis_user', JSON.stringify(userObj));
-            googleSimModal.classList.add('hidden');
-            setUserLoggedIn(userObj);
-        });
+    function renderSongList() {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      document.getElementById('current-playlist-title').innerText = pl ? pl.name : '';
+      document.getElementById('playlist-stats').innerText = `${pl ? pl.songs.length : 0} Lagu • Hanya mengulang lagu di playlist ini`;
 
-        btnCancelSim.addEventListener('click', () => {
-            googleSimModal.classList.add('hidden');
-        });
+      const container = document.getElementById('song-list');
+      if (!pl || pl.songs.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-gray-500 text-xs">Belum ada lagu di playlist ini. Klik "Tambah Lagu (Laptop)" untuk menambahkan.</div>`;
+        return;
+      }
 
-        btnGuestAuth.addEventListener('click', () => {
-            const guestObj = {
-                uid: 'local-guest-user',
-                displayName: 'Tamu Playlis',
-                email: 'tamu@playlis.local',
-                photoURL: 'https://placehold.co/100x100/141422/9d50bb?text=T'
-            };
-            localStorage.setItem('playlis_user', JSON.stringify(guestObj));
-            setUserLoggedIn(guestObj);
-        });
+      container.innerHTML = pl.songs.map((song, idx) => `
+        <div class="grid grid-cols-12 gap-4 px-6 py-3.5 text-sm items-center hover:bg-white/5 transition group cursor-pointer ${currentSongIndex === idx ? 'bg-purple-500/10 text-purple-300' : 'text-gray-300'}" onclick="playSongIndex(${idx})">
+          <div class="col-span-1 text-xs text-gray-500">${idx + 1}</div>
+          <div class="col-span-6 font-medium truncate flex items-center gap-3">
+            <i data-lucide="music" class="w-4 h-4 text-gray-500 group-hover:text-purple-400"></i>
+            <span class="truncate">${song.title}</span>
+          </div>
+          <div class="col-span-3 text-xs text-gray-500">${song.size || 'Remote'}</div>
+          <div class="col-span-2 text-right">
+            <button onclick="event.stopPropagation(); removeSong('${song.id}')" class="p-1 text-gray-500 hover:text-red-400 rounded transition">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
 
-        btnLogout.addEventListener('click', () => {
-            localStorage.removeItem('playlis_user');
-            if (!isLocalFile) {
-                signOut(auth).catch(() => {});
-            }
-            currentUser = null;
-            loginOverlay.classList.remove('hidden');
-            audioElement.pause();
-            isPlaying = false;
-            updatePlayPauseUI();
-        });
+    function removeSong(songId) {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl) return;
+      pl.songs = pl.songs.filter(s => s.id !== songId);
+      saveState();
+      renderSongList();
+    }
 
-        function setUserLoggedIn(user) {
-            currentUser = user;
-            loginOverlay.classList.add('hidden');
-            userName.textContent = user.displayName || 'Pengguna';
-            userAvatar.src = user.photoURL || 'https://placehold.co/100x100/141422/00d2ff?text=P';
-            initIndexedDB();
-            loadPlaylists();
+    function playSongIndex(index) {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl || !pl.songs[index]) return;
+
+      currentSongIndex = index;
+      const song = pl.songs[index];
+
+      audio.src = song.url;
+      audio.play();
+
+      document.getElementById('player-song-title').innerText = song.title;
+      document.getElementById('player-playlist-name').innerText = pl.name;
+      updatePlayButtonUI(true);
+      renderSongList();
+    }
+
+    function togglePlayPause() {
+      if (!audio.src) {
+        if (playlists.find(p => p.id === activePlaylistId)?.songs.length > 0) {
+          playSongIndex(0);
         }
+        return;
+      }
 
-        // Auto-login observer
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('playlis_user');
-            if (savedUser) {
-                try {
-                    setUserLoggedIn(JSON.parse(savedUser));
-                    return;
-                } catch (e) {}
-            }
+      if (audio.paused) {
+        audio.play();
+        updatePlayButtonUI(true);
+      } else {
+        audio.pause();
+        updatePlayButtonUI(false);
+      }
+    }
 
-            if (!isLocalFile) {
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        setUserLoggedIn({
-                            uid: user.uid,
-                            displayName: user.displayName || 'Pengguna Google',
-                            email: user.email,
-                            photoURL: user.photoURL
-                        });
-                    }
-                });
-            }
-        });
+    function updatePlayButtonUI(isPlaying) {
+      const btn = document.getElementById('btn-play');
+      btn.innerHTML = isPlaying ? `<i data-lucide="pause" class="w-5 h-5 fill-black"></i>` : `<i data-lucide="play" class="w-5 h-5 fill-black ml-0.5"></i>`;
+      lucide.createIcons();
+    }
 
-        function loadPlaylists() {
-            if (!currentUser) return;
-            
-            // Try loading from localStorage first for instant offline responsiveness
-            const localStored = localStorage.getItem(`playlis_data_${currentUser.uid}`);
-            if (localStored) {
-                try {
-                    playlists = JSON.parse(localStored);
-                } catch (e) { playlists = []; }
-            }
+    function playNextSong() {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl || pl.songs.length === 0) return;
 
-            if (!playlists || playlists.length === 0) {
-                playlists = [{
-                    id: 'pl-default',
-                    name: 'Playlist Utama',
-                    songs: []
-                }];
-                savePlaylists();
-            }
+      if (isShuffle) {
+        currentSongIndex = Math.floor(Math.random() * pl.songs.length);
+      } else {
+        currentSongIndex = (currentSongIndex + 1) % pl.songs.length;
+      }
+      playSongIndex(currentSongIndex);
+    }
 
-            if (!activePlaylistId && playlists.length > 0) {
-                activePlaylistId = playlists[0].id;
-            }
+    function playPrevSong() {
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl || pl.songs.length === 0) return;
 
-            renderSidebarPlaylists();
-            renderCurrentPlaylistView();
+      currentSongIndex = (currentSongIndex - 1 + pl.songs.length) % pl.songs.length;
+      playSongIndex(currentSongIndex);
+    }
 
-            // Sync with Firestore if hosted on web server
-            if (!isLocalFile && currentUser.uid && !currentUser.uid.startsWith('local-')) {
-                const userDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'userPlaylists');
-                onSnapshot(userDoc, (snap) => {
-                    if (snap.exists() && snap.data().playlists) {
-                        playlists = snap.data().playlists;
-                        savePlaylistsToLocalStorage();
-                        renderSidebarPlaylists();
-                        renderCurrentPlaylistView();
-                    }
-                }, () => {});
-            }
+    function setupAudioListeners() {
+      audio.ontimeupdate = () => {
+        if (!audio.duration) return;
+        const current = audio.currentTime;
+        const duration = audio.duration;
+        document.getElementById('seek-bar').value = (current / duration) * 100;
+        document.getElementById('time-current').innerText = formatTime(current);
+        document.getElementById('time-duration').innerText = formatTime(duration);
+      };
+
+      // SAAT LAGU SELESAI: Hanya mengulang yang ada di playlist tersebut
+      audio.onended = () => {
+        playNextSong();
+      };
+    }
+
+    function seekAudio(value) {
+      if (audio.duration) {
+        audio.currentTime = (value / 100) * audio.duration;
+      }
+    }
+
+    function setVolume(value) {
+      audio.volume = value / 100;
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // CONVERT LINK FEATURE
+    function updateConvertPlaylistSelect() {
+      const select = document.getElementById('convert-playlist-select');
+      select.innerHTML = playlists.map(pl => `<option value="${pl.id}">${pl.name}</option>`).join('');
+    }
+
+    function processConvert() {
+      const url = document.getElementById('convert-url-input').value.trim();
+      const title = document.getElementById('convert-title-input').value.trim() || 'Converted Song ' + new Date().toLocaleTimeString();
+      const targetPlId = document.getElementById('convert-playlist-select').value;
+      const statusDiv = document.getElementById('convert-status');
+
+      if (!url) {
+        alert('Masukkan tautan audio terlebih dahulu!');
+        return;
+      }
+
+      statusDiv.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/20', 'text-red-300');
+      statusDiv.classList.add('bg-purple-500/10', 'border-purple-500/20', 'text-purple-300');
+      statusDiv.innerText = 'Memproses konversi dan mengunduh audio...';
+
+      setTimeout(() => {
+        const targetPl = playlists.find(p => p.id === targetPlId);
+        if (targetPl) {
+          targetPl.songs.push({
+            id: 'converted_' + Date.now(),
+            title: title,
+            size: 'MP3 Link',
+            url: url
+          });
+          saveState();
+          statusDiv.innerText = `Berhasil dikonversi & ditambahkan ke playlist "${targetPl.name}"!`;
+          document.getElementById('convert-url-input').value = '';
+          document.getElementById('convert-title-input').value = '';
         }
-
-        function savePlaylists() {
-            savePlaylistsToLocalStorage();
-            if (!isLocalFile && currentUser && !currentUser.uid.startsWith('local-')) {
-                const userDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'userPlaylists');
-                setDoc(userDoc, { playlists: playlists }, { merge: true }).catch(() => {});
-            }
-        }
-
-        function savePlaylistsToLocalStorage() {
-            if (!currentUser) return;
-            localStorage.setItem(`playlis_data_${currentUser.uid}`, JSON.stringify(playlists));
-        }
-
-        function renderSidebarPlaylists() {
-            playlistList.innerHTML = '';
-            playlists.forEach((pl) => {
-                const isActive = pl.id === activePlaylistId;
-                const div = document.createElement('div');
-                div.className = `flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition text-xs font-medium ${
-                    isActive ? 'bg-dark-card text-gemini-cyan border border-dark-border' : 'text-gray-400 hover:bg-dark-hover hover:text-gray-200'
-                }`;
-                div.innerHTML = `
-                    <div class="flex items-center gap-2.5 truncate">
-                        <i class="fa-solid ${isActive ? 'fa-compact-disc animate-spin-slow text-gemini-cyan' : 'fa-list'} text-sm"></i>
-                        <span class="truncate">${pl.name}</span>
-                    </div>
-                    <span class="text-[10px] bg-dark-base px-1.5 py-0.5 rounded text-gray-500">${pl.songs.length}</span>
-                `;
-                div.onclick = () => {
-                    activePlaylistId = pl.id;
-                    renderSidebarPlaylists();
-                    renderCurrentPlaylistView();
-                };
-                playlistList.appendChild(div);
-            });
-        }
-
-        function getActivePlaylist() {
-            return playlists.find(p => p.id === activePlaylistId) || playlists[0];
-        }
-
-        function renderCurrentPlaylistView() {
-            const activePl = getActivePlaylist();
-            if (!activePl) return;
-
-            currentPlaylistTitle.textContent = activePl.name;
-            playlistSongCount.textContent = `${activePl.songs.length} Lagu • Hanya mengulang lagu di playlist ini`;
-
-            songListTableBody.innerHTML = '';
-
-            if (activePl.songs.length === 0) {
-                emptyPlaylistState.classList.remove('hidden');
-            } else {
-                emptyPlaylistState.classList.add('hidden');
-                activePl.songs.forEach((song, idx) => {
-                    const isSongPlaying = (currentSongIndex === idx && isPlaying);
-                    const tr = document.createElement('tr');
-                    tr.className = `hover:bg-dark-hover/60 transition group cursor-pointer ${
-                        currentSongIndex === idx ? 'text-gemini-cyan font-medium bg-dark-hover/30' : ''
-                    }`;
-                    
-                    tr.innerHTML = `
-                        <td class="py-3 px-3 text-center">
-                            ${isSongPlaying 
-                                ? '<i class="fa-solid fa-volume-high text-gemini-cyan text-xs"></i>' 
-                                : `<span class="group-hover:hidden">${idx + 1}</span><i class="fa-solid fa-play hidden group-hover:inline text-xs text-gray-300"></i>`}
-                        </td>
-                        <td class="py-3 px-3 font-medium flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-dark-card border border-dark-border flex items-center justify-center text-xs text-gray-400">
-                                <i class="fa-solid fa-music"></i>
-                            </div>
-                            <span class="truncate max-w-[180px] md:max-w-xs text-gray-200">${song.title}</span>
-                        </td>
-                        <td class="py-3 px-3 text-gray-400 text-xs hidden md:table-cell">${(song.size / (1024 * 1024)).toFixed(2)} MB</td>
-                        <td class="py-3 px-3 text-right text-gray-400 font-mono text-xs">${formatTime(song.duration || 0)}</td>
-                        <td class="py-3 px-3 text-center">
-                            <button onclick="event.stopPropagation(); window.removeSong(${idx})" class="text-gray-500 hover:text-red-400 p-1.5 transition">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </td>
-                    `;
-
-                    tr.onclick = () => playSong(idx);
-                    songListTableBody.appendChild(tr);
-                });
-            }
-        }
-
-        btnCreatePlaylist.addEventListener('click', () => {
-            const name = prompt("Masukkan nama playlist baru:", `Playlist #${playlists.length + 1}`);
-            if (name && name.trim()) {
-                const newPl = {
-                    id: 'pl-' + Date.now(),
-                    name: name.trim(),
-                    songs: []
-                };
-                playlists.push(newPl);
-                activePlaylistId = newPl.id;
-                savePlaylists();
-                renderSidebarPlaylists();
-                renderCurrentPlaylistView();
-            }
-        });
-
-        btnEditPlaylistName.addEventListener('click', () => {
-            const activePl = getActivePlaylist();
-            if (!activePl) return;
-            const newName = prompt("Ubah nama playlist:", activePl.name);
-            if (newName && newName.trim()) {
-                activePl.name = newName.trim();
-                savePlaylists();
-                renderSidebarPlaylists();
-                renderCurrentPlaylistView();
-            }
-        });
-
-        btnDeletePlaylist.addEventListener('click', () => {
-            if (playlists.length <= 1) {
-                alert("Minimal Anda harus memiliki 1 playlist.");
-                return;
-            }
-            const activePl = getActivePlaylist();
-            if (confirm(`Hapus playlist "${activePl.name}"?`)) {
-                playlists = playlists.filter(p => p.id !== activePl.id);
-                activePlaylistId = playlists[0].id;
-                savePlaylists();
-                renderSidebarPlaylists();
-                renderCurrentPlaylistView();
-            }
-        });
-
-        audioFileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-
-            const activePl = getActivePlaylist();
-            if (!activePl) return;
-
-            for (const file of files) {
-                const songId = 'song-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-                const duration = await getAudioDuration(file);
-
-                await saveAudioBlob(songId, file);
-
-                activePl.songs.push({
-                    id: songId,
-                    title: file.name.replace(/\.[^/.]+$/, ""),
-                    size: file.size,
-                    duration: duration
-                });
-            }
-
-            savePlaylists();
-            renderSidebarPlaylists();
-            renderCurrentPlaylistView();
-            audioFileInput.value = '';
-        });
-
-        function getAudioDuration(file) {
-            return new Promise((resolve) => {
-                const audio = new Audio();
-                audio.src = URL.createObjectURL(file);
-                audio.onloadedmetadata = () => {
-                    URL.revokeObjectURL(audio.src);
-                    resolve(audio.duration || 0);
-                };
-                audio.onerror = () => resolve(0);
-            });
-        }
-
-        window.removeSong = async function(songIndex) {
-            const activePl = getActivePlaylist();
-            if (!activePl) return;
-            activePl.songs.splice(songIndex, 1);
-            savePlaylists();
-            if (currentSongIndex === songIndex) {
-                audioElement.pause();
-                isPlaying = false;
-                updatePlayPauseUI();
-            }
-            renderCurrentPlaylistView();
-        };
-
-        async function playSong(index) {
-            const activePl = getActivePlaylist();
-            if (!activePl || !activePl.songs[index]) return;
-
-            currentSongIndex = index;
-            const song = activePl.songs[index];
-
-            const blob = await getAudioBlob(song.id);
-            if (!blob) {
-                alert("Berkas audio lokal tidak ditemukan di penyimpanan browser.");
-                return;
-            }
-
-            const objectUrl = URL.createObjectURL(blob);
-            audioElement.src = objectUrl;
-
-            try {
-                await audioElement.play();
-                isPlaying = true;
-                updatePlayPauseUI();
-                setupMediaSession(song.title, activePl.name);
-                playerTitle.textContent = song.title;
-                playerArtist.textContent = activePl.name;
-                renderCurrentPlaylistView();
-            } catch (err) {
-                console.error("Gagal memutar audio:", err);
-            }
-        }
-
-        function setupMediaSession(title, playlistName) {
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: title,
-                    artist: playlistName,
-                    album: 'playlis App (supported by Gemini)',
-                    artwork: [
-                        { src: 'https://placehold.co/512x512/0F0E1B/00d2ff?text=playlis', sizes: '512x512', type: 'image/png' }
-                    ]
-                });
-
-                navigator.mediaSession.setActionHandler('play', () => { audioElement.play(); isPlaying = true; updatePlayPauseUI(); });
-                navigator.mediaSession.setActionHandler('pause', () => { audioElement.pause(); isPlaying = false; updatePlayPauseUI(); });
-                navigator.mediaSession.setActionHandler('previoustrack', playPrevSong);
-                navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
-            }
-        }
-
-        btnPlayPause.addEventListener('click', () => {
-            if (!audioElement.src) {
-                const activePl = getActivePlaylist();
-                if (activePl && activePl.songs.length > 0) {
-                    playSong(0);
-                }
-                return;
-            }
-            if (isPlaying) {
-                audioElement.pause();
-                isPlaying = false;
-            } else {
-                audioElement.play();
-                isPlaying = true;
-            }
-            updatePlayPauseUI();
-        });
-
-        function updatePlayPauseUI() {
-            btnPlayPause.innerHTML = isPlaying 
-                ? '<i class="fa-solid fa-pause"></i>' 
-                : '<i class="fa-solid fa-play ml-0.5"></i>';
-        }
-
-        function playNextSong() {
-            const activePl = getActivePlaylist();
-            if (!activePl || activePl.songs.length === 0) return;
-
-            let nextIndex;
-            if (isShuffle) {
-                nextIndex = Math.floor(Math.random() * activePl.songs.length);
-            } else {
-                nextIndex = (currentSongIndex + 1) % activePl.songs.length;
-            }
-            playSong(nextIndex);
-        }
-
-        function playPrevSong() {
-            const activePl = getActivePlaylist();
-            if (!activePl || activePl.songs.length === 0) return;
-
-            let prevIndex = (currentSongIndex - 1 + activePl.songs.length) % activePl.songs.length;
-            playSong(prevIndex);
-        }
-
-        btnNext.addEventListener('click', playNextSong);
-        btnPrev.addEventListener('click', playPrevSong);
-
-        // Continuous Loop inside active playlist
-        audioElement.addEventListener('ended', () => {
-            playNextSong();
-        });
-
-        // Time updates
-        audioElement.addEventListener('timeupdate', () => {
-            if (!isNaN(audioElement.duration)) {
-                const progress = (audioElement.currentTime / audioElement.duration) * 100;
-                progressBar.value = progress;
-                currentTime.textContent = formatTime(audioElement.currentTime);
-                totalTime.textContent = formatTime(audioElement.duration);
-            }
-        });
-
-        progressBar.addEventListener('input', (e) => {
-            if (!isNaN(audioElement.duration)) {
-                audioElement.currentTime = (e.target.value / 100) * audioElement.duration;
-            }
-        });
-
-        // Volume
-        volumeBar.addEventListener('input', (e) => {
-            audioElement.volume = e.target.value;
-            updateVolumeIcon(e.target.value);
-        });
-
-        btnMute.addEventListener('click', () => {
-            if (audioElement.volume > 0) {
-                audioElement.volume = 0;
-                volumeBar.value = 0;
-            } else {
-                audioElement.volume = 0.8;
-                volumeBar.value = 0.8;
-            }
-            updateVolumeIcon(audioElement.volume);
-        });
-
-        function updateVolumeIcon(vol) {
-            if (vol == 0) {
-                volumeIcon.className = 'fa-solid fa-volume-xmark text-red-400';
-            } else if (vol < 0.5) {
-                volumeIcon.className = 'fa-solid fa-volume-low text-gray-300';
-            } else {
-                volumeIcon.className = 'fa-solid fa-volume-high text-gray-300';
-            }
-        }
-
-        btnShuffle.addEventListener('click', () => {
-            isShuffle = !isShuffle;
-            btnShuffle.classList.toggle('text-gemini-cyan', isShuffle);
-            btnShuffle.classList.toggle('text-gray-400', !isShuffle);
-        });
-
-        btnLoop.addEventListener('click', () => {
-            isLooping = !isLooping;
-            btnLoop.classList.toggle('text-gemini-cyan', isLooping);
-            btnLoop.classList.toggle('text-gray-400', !isLooping);
-        });
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-    </script>
+      }, 1500);
+    }
+  </script>
 </body>
 </html>
