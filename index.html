@@ -74,7 +74,7 @@
 
         <hr class="border-white/5 my-4">
 
-        <!-- Quick Playlists List (Samping) -->
+        <!-- Quick Playlists List -->
         <div>
           <div class="flex items-center justify-between px-2 mb-2">
             <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Playlist Saya</span>
@@ -101,7 +101,7 @@
         <div class="flex items-center gap-2">
           <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-            Mode Penyimpanan Laptop (Offline Ready)
+            Mode Penyimpanan Laptop (IndexedDB Active)
           </span>
         </div>
         
@@ -171,7 +171,7 @@
           <div class="bg-[#0d0e15] border border-white/10 p-6 rounded-2xl space-y-4">
             <div>
               <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Tautan / Link Audio</label>
-              <input type="url" id="convert-url-input" placeholder="https://example.com/audio.mp3 atau link streaming" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
+              <input type="url" id="convert-url-input" placeholder="https://example.com/audio.mp3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
             </div>
 
             <div>
@@ -291,20 +291,57 @@
   <!-- HTML5 Audio Element -->
   <audio id="audio-player"></audio>
 
-  <!-- JAVASCRIPT APP LOGIC -->
   <script>
-    // INITIAL STATE
+    // INDEXED DB SETUP FOR PERMANENT AUDIO STORAGE
+    let db;
+    const request = indexedDB.open("PlaylisAudioDB", 1);
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("audioFiles")) {
+        db.createObjectStore("audioFiles");
+      }
+    };
+    request.onsuccess = (e) => { db = e.target.result; };
+
+    function storeAudioFile(id, fileOrBlob) {
+      return new Promise((resolve, reject) => {
+        if (!db) return resolve();
+        const tx = db.transaction("audioFiles", "readwrite");
+        const store = tx.objectStore("audioFiles");
+        store.put(fileOrBlob, id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject();
+      });
+    }
+
+    function getAudioFile(id) {
+      return new Promise((resolve) => {
+        if (!db) return resolve(null);
+        const tx = db.transaction("audioFiles", "readonly");
+        const store = tx.objectStore("audioFiles");
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function deleteAudioFile(id) {
+      if (!db) return;
+      const tx = db.transaction("audioFiles", "readwrite");
+      tx.objectStore("audioFiles").delete(id);
+    }
+
+    // STATE MANAGEMENT
     let playlists = JSON.parse(localStorage.getItem('playlis_data')) || [
       { id: 'default', name: 'Playlist Utama', songs: [] }
     ];
     let activePlaylistId = playlists[0].id;
     let currentSongIndex = -1;
     let isShuffle = false;
-    let isRepeat = true; // Auto loop playlist
+    let isRepeat = true;
 
     const audio = document.getElementById('audio-player');
 
-    // INIT APP
     window.onload = () => {
       lucide.createIcons();
       renderPlaylists();
@@ -313,7 +350,6 @@
       setupAudioListeners();
     };
 
-    // NAVIGATION SYSTEM
     function switchTab(tabName) {
       ['player', 'converter', 'about'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
@@ -323,7 +359,6 @@
       document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-white/10 text-white";
     }
 
-    // PLAYLIST MANAGEMENT
     function saveState() {
       localStorage.setItem('playlis_data', JSON.stringify(playlists));
       renderPlaylists();
@@ -358,6 +393,10 @@
         return;
       }
       if (confirm('Hapus playlist ini beserta seluruh lagunya?')) {
+        const pl = playlists.find(p => p.id === activePlaylistId);
+        if (pl) {
+          pl.songs.forEach(s => deleteAudioFile(s.id));
+        }
         playlists = playlists.filter(p => p.id !== activePlaylistId);
         activePlaylistId = playlists[0].id;
         saveState();
@@ -381,24 +420,26 @@
       renderSongList();
     }
 
-    // SONG MANAGEMENT & AUDIO HANDLING
-    function handleAudioUpload(event) {
+    async function handleAudioUpload(event) {
       const files = event.target.files;
       const pl = playlists.find(p => p.id === activePlaylistId);
       if (!pl) return;
 
-      Array.from(files).forEach(file => {
-        const url = URL.createObjectURL(file);
+      for (let file of files) {
+        const songId = 'song_' + Date.now() + Math.random();
+        await storeAudioFile(songId, file);
+
         pl.songs.push({
-          id: 'song_' + Date.now() + Math.random(),
+          id: songId,
           title: file.name.replace(/\.[^/.]+$/, ""),
           size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-          url: url
+          type: 'local'
         });
-      });
+      }
 
       saveState();
       renderSongList();
+      event.target.value = '';
     }
 
     function renderSongList() {
@@ -433,20 +474,32 @@
     function removeSong(songId) {
       const pl = playlists.find(p => p.id === activePlaylistId);
       if (!pl) return;
+      deleteAudioFile(songId);
       pl.songs = pl.songs.filter(s => s.id !== songId);
       saveState();
       renderSongList();
     }
 
-    function playSongIndex(index) {
+    async function playSongIndex(index) {
       const pl = playlists.find(p => p.id === activePlaylistId);
       if (!pl || !pl.songs[index]) return;
 
       currentSongIndex = index;
       const song = pl.songs[index];
 
-      audio.src = song.url;
-      audio.play();
+      let audioSrc = song.url;
+      if (song.type === 'local') {
+        const fileData = await getAudioFile(song.id);
+        if (fileData) {
+          audioSrc = URL.createObjectURL(fileData);
+        } else {
+          alert('Berkas audio tidak ditemukan di memori laptop. Sila unggah ulang.');
+          return;
+        }
+      }
+
+      audio.src = audioSrc;
+      audio.play().catch(() => {});
 
       document.getElementById('player-song-title').innerText = song.title;
       document.getElementById('player-playlist-name').innerText = pl.name;
@@ -507,7 +560,6 @@
         document.getElementById('time-duration').innerText = formatTime(duration);
       };
 
-      // SAAT LAGU SELESAI: Hanya mengulang yang ada di playlist tersebut
       audio.onended = () => {
         playNextSong();
       };
@@ -529,7 +581,6 @@
       return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // CONVERT LINK FEATURE
     function updateConvertPlaylistSelect() {
       const select = document.getElementById('convert-playlist-select');
       select.innerHTML = playlists.map(pl => `<option value="${pl.id}">${pl.name}</option>`).join('');
@@ -557,7 +608,8 @@
             id: 'converted_' + Date.now(),
             title: title,
             size: 'MP3 Link',
-            url: url
+            url: url,
+            type: 'remote'
           });
           saveState();
           statusDiv.innerText = `Berhasil dikonversi & ditambahkan ke playlist "${targetPl.name}"!`;
