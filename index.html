@@ -1,623 +1,229 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>playlis - Music Player supported by Gemini</title>
-  <!-- Tailwind CSS CDN -->
+  <title>playlis - Music Player</title>
+  <!-- Menggunakan Tailwind CSS via CDN agar tampilan langsung rapi -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
+  <!-- Menggunakan Lucide Icons untuk ikon yang bersih -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    body {
-      background-color: #090a0f;
-      color: #f3f4f6;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-    .gemini-gradient-text {
-      background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .gemini-bg-gradient {
-      background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
+    /* Custom scrollbar untuk nuansa gelap yang elegan */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #09090b; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
   </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased flex h-screen overflow-hidden select-none">
 
-  <!-- APP CONTAINER -->
-  <div class="flex-1 flex overflow-hidden">
-
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-[#0d0e15] border-r border-white/5 flex flex-col justify-between p-4 flex-shrink-0">
-      <div class="space-y-6">
-        <!-- Logo -->
-        <div class="flex items-center gap-3 px-2">
-          <div class="w-10 h-10 rounded-xl gemini-bg-gradient flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <i data-lucide="disc-3" class="w-6 h-6 text-white animate-spin-slow"></i>
-          </div>
-          <div>
-            <h1 class="text-xl font-extrabold tracking-wider gemini-gradient-text">playlis</h1>
-            <p class="text-[10px] text-gray-400 font-medium tracking-tight">Music Player</p>
-          </div>
+  <!-- SIDEBAR KIRI -->
+  <aside class="w-72 bg-zinc-900/90 border-r border-zinc-800/80 flex flex-col justify-between p-5">
+    <div>
+      <!-- Logo & Judul -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <i data-lucide="disc-3" class="w-6 h-6 text-white"></i>
         </div>
-
-        <!-- Navigation Menu -->
-        <nav class="space-y-1">
-          <button onclick="switchTab('player')" id="nav-player" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-white/10 text-white">
-            <i data-lucide="music" class="w-4 h-4 text-purple-400"></i>
-            Pemutar & Playlist
-          </button>
-          <button onclick="switchTab('converter')" id="nav-converter" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5">
-            <i data-lucide="link" class="w-4 h-4 text-pink-400"></i>
-            Convert MP3
-          </button>
-          <button onclick="switchTab('about')" id="nav-about" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5">
-            <i data-lucide="info" class="w-4 h-4 text-blue-400"></i>
-            Tentang
-          </button>
-        </nav>
-
-        <hr class="border-white/5 my-4">
-
-        <!-- Quick Playlists List -->
         <div>
-          <div class="flex items-center justify-between px-2 mb-2">
-            <span class="text-xs font-bold tracking-wider text-gray-400 uppercase">Playlist Saya</span>
-            <button onclick="createPlaylist()" class="p-1 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <div id="sidebar-playlists" class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
-            <!-- Rendered by JS -->
-          </div>
+          <h1 class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent leading-none">
+            playlis
+          </h1>
+          <span class="text-xs text-zinc-400 font-medium">Music Player</span>
         </div>
       </div>
 
-      <!-- Footer Info -->
-      <div class="px-2 pt-4 border-t border-white/5 text-center">
-        <p class="text-xs text-gray-400">supported by <span class="gemini-gradient-text font-bold">Gemini</span></p>
-      </div>
-    </aside>
+      <!-- Menu Navigasi Utama -->
+      <nav class="space-y-1.5 mb-8">
+        <button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600/20 to-blue-600/10 border border-purple-500/30 text-purple-300 font-medium text-sm transition">
+          <i data-lucide="music" class="w-4 h-4 text-purple-400"></i>
+          Pemutar & Playlist
+        </button>
+        <button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium text-sm transition">
+          <i data-lucide="link" class="w-4 h-4"></i>
+          Convert MP3
+        </button>
+        <button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium text-sm transition">
+          <i data-lucide="info" class="w-4 h-4"></i>
+          Tentang
+        </button>
+      </nav>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col bg-[#090a0f] overflow-hidden">
-      <!-- TOPBAR -->
-      <header class="h-16 border-b border-white/5 px-8 flex items-center justify-between flex-shrink-0 bg-[#0d0e15]/50 backdrop-blur-md">
-        <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-            Mode Penyimpanan Laptop (IndexedDB Active)
-          </span>
-        </div>
-        
-        <!-- User Profile -->
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full gemini-bg-gradient flex items-center justify-center font-bold text-xs text-white">
-            AW
-          </div>
-          <span class="text-sm font-medium text-gray-200">Arya Wira</span>
-        </div>
-      </header>
-
-      <!-- TAB 1: PLAYER & PLAYLIST PAGE -->
-      <div id="tab-player" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <!-- Playlist Banner -->
-        <div class="bg-gradient-to-r from-purple-900/30 via-pink-900/20 to-transparent p-6 rounded-3xl border border-white/10 flex items-center justify-between mb-8">
-          <div class="flex items-center gap-6">
-            <div class="w-24 h-24 rounded-2xl gemini-bg-gradient flex items-center justify-center shadow-xl">
-              <i data-lucide="list-music" class="w-12 h-12 text-white"></i>
-            </div>
-            <div>
-              <span class="text-xs font-bold tracking-widest text-purple-400 uppercase">PLAYLIST</span>
-              <div class="flex items-center gap-3 mt-1">
-                <h2 id="current-playlist-title" class="text-3xl font-extrabold text-white">Playlist Utama</h2>
-                <button onclick="renameCurrentPlaylist()" class="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i>
-                </button>
-              </div>
-              <p id="playlist-stats" class="text-xs text-gray-400 mt-2">0 Lagu • Hanya mengulang lagu di playlist ini</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <label class="cursor-pointer bg-white text-black font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-gray-200 transition flex items-center gap-2 shadow-lg">
-              <i data-lucide="upload" class="w-4 h-4"></i>
-              Tambah Lagu (Laptop)
-              <input type="file" id="audio-input" accept="audio/*" multiple class="hidden" onchange="handleAudioUpload(event)">
-            </label>
-            <button onclick="deleteCurrentPlaylist()" class="p-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </div>
+      <!-- Bagian Playlist Saya -->
+      <div>
+        <div class="flex items-center justify-between px-2 mb-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Playlist Saya</span>
+          <button title="Buat Playlist Baru" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
         </div>
 
-        <!-- Songs Table -->
-        <div class="bg-[#0d0e15] border border-white/5 rounded-2xl overflow-hidden">
-          <div class="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold text-gray-400 border-b border-white/5 uppercase tracking-wider">
-            <div class="col-span-1">#</div>
-            <div class="col-span-6">Judul Lagu</div>
-            <div class="col-span-3">Ukuran</div>
-            <div class="col-span-2 text-right">Aksi</div>
-          </div>
-          <div id="song-list" class="divide-y divide-white/5">
-            <!-- Rendered by JS -->
-          </div>
+        <div class="space-y-1">
+          <button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-zinc-800/80 text-white text-sm font-medium border-l-2 border-pink-500">
+            <span class="truncate">Playlist Baru 15</span>
+            <span class="text-xs text-zinc-400">15</span>
+          </button>
         </div>
       </div>
+    </div>
 
-      <!-- TAB 2: CONVERT MP3 PAGE -->
-      <div id="tab-converter" class="flex-1 overflow-y-auto p-8 custom-scrollbar hidden">
-        <div class="max-w-2xl mx-auto space-y-6">
+    <!-- Footer Sidebar (Status Penyimpanan & Profil) -->
+    <div class="space-y-4 pt-4 border-t border-zinc-800/80">
+      <div class="text-xs text-zinc-500">
+        supported by <span class="text-purple-400 font-medium">Gemini</span>
+      </div>
+
+      <!-- Badge IndexedDB -->
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="truncate">Mode Penyimpanan Laptop (IndexedDB Active)</span>
+      </div>
+
+      <!-- Profil User -->
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-zinc-800/40">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 flex items-center justify-center font-bold text-sm text-white shrink-0">
+          AW
+        </div>
+        <div class="overflow-hidden">
+          <p class="text-sm font-semibold text-zinc-100 truncate">Arya Wira</p>
+          <p class="text-xs text-zinc-400 truncate">Local User</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- KONTEN UTAMA -->
+  <main class="flex-1 flex flex-col bg-zinc-950 overflow-hidden">
+    <!-- Header Playlist dengan Gradien -->
+    <header class="bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-blue-900/40 border-b border-zinc-800/80 p-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="flex items-center gap-5">
+          <!-- Cover Icon Playlist -->
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-blue-500 flex items-center justify-center shadow-xl shadow-pink-500/10 shrink-0">
+            <i data-lucide="list-music" class="w-12 h-12 text-white"></i>
+          </div>
+
           <div>
-            <h2 class="text-2xl font-bold text-white mb-2">Convert Link to MP3</h2>
-            <p class="text-sm text-gray-400">Masukkan tautan video atau audio publik untuk diproses dan langsung ditambahkan ke playlist pilihan Anda.</p>
+            <span class="text-xs font-bold uppercase tracking-widest text-pink-400">PLAYLIST</span>
+            <div class="flex items-center gap-3 mt-1">
+              <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Playlist Baru</h2>
+              <button title="Ubah Nama Playlist" class="p-2 rounded-lg bg-zinc-800/70 hover:bg-zinc-700 text-zinc-300 transition">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <p class="text-sm text-zinc-300 mt-2">
+              15 Lagu &bull; <span class="text-zinc-400">Hanya mengulang lagu di playlist ini</span>
+            </p>
           </div>
+        </div>
 
-          <div class="bg-[#0d0e15] border border-white/10 p-6 rounded-2xl space-y-4">
-            <div>
-              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Tautan / Link Audio</label>
-              <input type="url" id="convert-url-input" placeholder="https://example.com/audio.mp3" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
-            </div>
+        <!-- Tombol Aksi (Tambah Lagu & Hapus Playlist) -->
+        <div class="flex items-center gap-3">
+          <label class="cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold shadow-lg shadow-purple-600/20 transition">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span>Tambah Lagu (Laptop)</span>
+            <input type="file" accept="audio/*" multiple class="hidden" id="audioUpload" />
+          </label>
 
-            <div>
-              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Judul Lagu (Opsional)</label>
-              <input type="text" id="convert-title-input" placeholder="Masukkan judul lagu..." class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
-            </div>
+          <button title="Hapus Playlist" class="p-2.5 rounded-xl bg-zinc-900 hover:bg-red-500/20 border border-zinc-700 hover:border-red-500/50 text-zinc-400 hover:text-red-400 transition">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </header>
 
-            <div>
-              <label class="block text-xs font-bold uppercase text-gray-400 mb-2">Pilih Playlist Tujuan</label>
-              <select id="convert-playlist-select" class="w-full bg-[#161822] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition">
-                <!-- Rendered by JS -->
-              </select>
-            </div>
+    <!-- Daftar Lagu (Area Scroll) -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="border border-zinc-800/80 rounded-2xl bg-zinc-900/30 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-zinc-800 text-xs uppercase text-zinc-400">
+              <th class="py-3.5 px-4 w-12 text-center">#</th>
+              <th class="py-3.5 px-4">Judul Lagu</th>
+              <th class="py-3.5 px-4 hidden sm:table-cell">Penyimpanan</th>
+              <th class="py-3.5 px-4 text-right">Durasi</th>
+            </tr>
+          </thead>
+          <tbody id="songList" class="divide-y divide-zinc-800/50 text-sm">
+            <!-- Contoh Item Lagu -->
+            <tr class="hover:bg-zinc-800/50 transition cursor-pointer group">
+              <td class="py-3.5 px-4 text-center text-zinc-400 group-hover:text-pink-400">1</td>
+              <td class="py-3.5 px-4 font-medium text-zinc-100">Contoh Lagu 1.mp3</td>
+              <td class="py-3.5 px-4 hidden sm:table-cell text-zinc-400 text-xs">IndexedDB Local</td>
+              <td class="py-3.5 px-4 text-right text-zinc-400">03:45</td>
+            </tr>
+            <tr class="hover:bg-zinc-800/50 transition cursor-pointer group">
+              <td class="py-3.5 px-4 text-center text-zinc-400 group-hover:text-pink-400">2</td>
+              <td class="py-3.5 px-4 font-medium text-zinc-100">Contoh Lagu 2.mp3</td>
+              <td class="py-3.5 px-4 hidden sm:table-cell text-zinc-400 text-xs">IndexedDB Local</td>
+              <td class="py-3.5 px-4 text-right text-zinc-400">04:12</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-            <button onclick="processConvert()" class="w-full gemini-bg-gradient py-3 rounded-xl font-bold text-white hover:opacity-90 transition flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
-              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-              Convert & Tambahkan ke Playlist
-            </button>
-          </div>
-
-          <div id="convert-status" class="hidden p-4 rounded-xl text-sm border"></div>
+    <!-- BAR PEMUTAR MUSIK BAWAH -->
+    <footer class="h-20 bg-zinc-900 border-t border-zinc-800 px-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 w-1/3">
+        <div class="w-11 h-11 rounded-lg bg-zinc-800 flex items-center justify-center text-purple-400">
+          <i data-lucide="music-2" class="w-5 h-5"></i>
+        </div>
+        <div class="truncate">
+          <p id="nowPlayingTitle" class="text-sm font-semibold text-white truncate">Pilih lagu untuk diputar</p>
+          <p class="text-xs text-zinc-400">Playlist Baru</p>
         </div>
       </div>
 
-      <!-- TAB 3: ABOUT PAGE -->
-      <div id="tab-about" class="flex-1 overflow-y-auto p-8 custom-scrollbar hidden">
-        <div class="max-w-2xl mx-auto bg-[#0d0e15] border border-white/10 rounded-3xl p-8 space-y-8">
-          <div class="flex items-center gap-4 border-b border-white/5 pb-6">
-            <div class="w-16 h-16 rounded-2xl gemini-bg-gradient flex items-center justify-center shadow-lg">
-              <i data-lucide="disc-3" class="w-8 h-8 text-white"></i>
-            </div>
-            <div>
-              <h2 class="text-2xl font-bold text-white">Tentang Website Ini</h2>
-              <p class="text-xs text-purple-400 font-medium">Aplikasi Pemutar Musik Lokal & Playlist Web</p>
-            </div>
-          </div>
-
-          <div class="space-y-4">
-            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-              <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Pengembang / Creator</span>
-              <p class="text-base font-semibold text-white">Website ini Dibuat oleh Creative Team Indonesia Anggota Arya Wira Hadiputra</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-                <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Mulai Produksi</span>
-                <p class="text-sm font-semibold text-white">21 September 2026</p>
-              </div>
-
-              <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-                <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Tanggal Publikasi</span>
-                <p class="text-sm font-semibold text-white">23 September 2026</p>
-              </div>
-            </div>
-
-            <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-              <span class="text-xs font-bold uppercase text-gray-400 block mb-1">Pembaruan Terakhir (Last Update)</span>
-              <p class="text-sm font-semibold text-purple-300">26 September 2026</p>
-            </div>
-          </div>
-
-          <div class="pt-4 border-t border-white/5 text-center">
-            <p class="text-xs text-gray-400">supported by <span class="gemini-gradient-text font-bold">Gemini</span></p>
-          </div>
+      <!-- Kontrol Play/Pause -->
+      <div class="flex flex-col items-center gap-1.5 w-1/3">
+        <div class="flex items-center gap-4">
+          <button class="text-zinc-400 hover:text-white transition"><i data-lucide="skip-back" class="w-5 h-5"></i></button>
+          <button class="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center hover:scale-105 transition">
+            <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+          </button>
+          <button class="text-zinc-400 hover:text-white transition"><i data-lucide="skip-forward" class="w-5 h-5"></i></button>
         </div>
       </div>
-    </main>
-  </div>
 
-  <!-- BOTTOM PLAYER CONTROLLER BAR -->
-  <footer class="h-20 bg-[#0b0c12] border-t border-white/5 px-6 flex items-center justify-between flex-shrink-0 z-50">
-    <!-- Current Song Info -->
-    <div class="flex items-center gap-4 w-1/4">
-      <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
-        <i data-lucide="music" class="w-6 h-6 text-purple-400"></i>
+      <!-- Volume -->
+      <div class="hidden sm:flex items-center justify-end gap-2 w-1/3 text-zinc-400">
+        <i data-lucide="volume-2" class="w-5 h-5"></i>
+        <input type="range" class="w-24 accent-pink-500 cursor-pointer" />
       </div>
-      <div class="truncate">
-        <h4 id="player-song-title" class="text-sm font-bold text-white truncate">Tidak ada lagu diputar</h4>
-        <p id="player-playlist-name" class="text-xs text-gray-400 truncate">Pilih lagu dari playlist</p>
-      </div>
-    </div>
-
-    <!-- Controls & Progress -->
-    <div class="flex flex-col items-center gap-1.5 w-2/4 max-w-xl">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleShuffle()" id="btn-shuffle" class="text-gray-400 hover:text-white transition">
-          <i data-lucide="shuffle" class="w-4 h-4"></i>
-        </button>
-        <button onclick="playPrevSong()" class="text-gray-300 hover:text-white transition">
-          <i data-lucide="skip-back" class="w-5 h-5"></i>
-        </button>
-        <button onclick="togglePlayPause()" id="btn-play" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow-lg">
-          <i data-lucide="play" class="w-5 h-5 fill-black ml-0.5"></i>
-        </button>
-        <button onclick="playNextSong()" class="text-gray-300 hover:text-white transition">
-          <i data-lucide="skip-forward" class="w-5 h-5"></i>
-        </button>
-        <button onclick="toggleRepeat()" id="btn-repeat" class="text-purple-400 hover:text-purple-300 transition" title="Loop Playlist">
-          <i data-lucide="repeat" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <div class="w-full flex items-center gap-3">
-        <span id="time-current" class="text-[10px] font-mono text-gray-400 w-8 text-right">00:00</span>
-        <input type="range" id="seek-bar" value="0" min="0" max="100" class="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="seekAudio(this.value)">
-        <span id="time-duration" class="text-[10px] font-mono text-gray-400 w-8">00:00</span>
-      </div>
-    </div>
-
-    <!-- Volume Control -->
-    <div class="flex items-center justify-end gap-3 w-1/4">
-      <i data-lucide="volume-2" class="w-4 h-4 text-gray-400"></i>
-      <input type="range" id="volume-bar" value="100" min="0" max="100" class="w-24 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="setVolume(this.value)">
-    </div>
-  </footer>
-
-  <!-- HTML5 Audio Element -->
-  <audio id="audio-player"></audio>
+    </footer>
+  </main>
 
   <script>
-    // INDEXED DB SETUP FOR PERMANENT AUDIO STORAGE
-    let db;
-    const request = indexedDB.open("PlaylisAudioDB", 1);
-    request.onupgradeneeded = (e) => {
-      db = e.target.result;
-      if (!db.objectStoreNames.contains("audioFiles")) {
-        db.createObjectStore("audioFiles");
-      }
-    };
-    request.onsuccess = (e) => { db = e.target.result; };
+    // Inisialisasi ikon Lucide
+    lucide.createIcons();
 
-    function storeAudioFile(id, fileOrBlob) {
-      return new Promise((resolve, reject) => {
-        if (!db) return resolve();
-        const tx = db.transaction("audioFiles", "readwrite");
-        const store = tx.objectStore("audioFiles");
-        store.put(fileOrBlob, id);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject();
-      });
-    }
+    // Contoh interaksi sederhana saat memilih file lagu dari laptop
+    const audioUpload = document.getElementById('audioUpload');
+    const songList = document.getElementById('songList');
+    const nowPlayingTitle = document.getElementById('nowPlayingTitle');
 
-    function getAudioFile(id) {
-      return new Promise((resolve) => {
-        if (!db) return resolve(null);
-        const tx = db.transaction("audioFiles", "readonly");
-        const store = tx.objectStore("audioFiles");
-        const req = store.get(id);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-    }
-
-    function deleteAudioFile(id) {
-      if (!db) return;
-      const tx = db.transaction("audioFiles", "readwrite");
-      tx.objectStore("audioFiles").delete(id);
-    }
-
-    // STATE MANAGEMENT
-    let playlists = JSON.parse(localStorage.getItem('playlis_data')) || [
-      { id: 'default', name: 'Playlist Utama', songs: [] }
-    ];
-    let activePlaylistId = playlists[0].id;
-    let currentSongIndex = -1;
-    let isShuffle = false;
-    let isRepeat = true;
-
-    const audio = document.getElementById('audio-player');
-
-    window.onload = () => {
-      lucide.createIcons();
-      renderPlaylists();
-      renderSongList();
-      updateConvertPlaylistSelect();
-      setupAudioListeners();
-    };
-
-    function switchTab(tabName) {
-      ['player', 'converter', 'about'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`nav-${t}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-gray-400 hover:text-white hover:bg-white/5";
-      });
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      document.getElementById(`nav-${tabName}`).className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-white/10 text-white";
-    }
-
-    function saveState() {
-      localStorage.setItem('playlis_data', JSON.stringify(playlists));
-      renderPlaylists();
-      updateConvertPlaylistSelect();
-    }
-
-    function createPlaylist() {
-      const name = prompt('Masukkan nama playlist baru:', 'Playlist Baru');
-      if (name) {
-        const newPl = { id: 'pl_' + Date.now(), name: name, songs: [] };
-        playlists.push(newPl);
-        activePlaylistId = newPl.id;
-        saveState();
-        renderSongList();
-      }
-    }
-
-    function renameCurrentPlaylist() {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl) return;
-      const newName = prompt('Ubah nama playlist:', pl.name);
-      if (newName) {
-        pl.name = newName;
-        saveState();
-        document.getElementById('current-playlist-title').innerText = pl.name;
-      }
-    }
-
-    function deleteCurrentPlaylist() {
-      if (playlists.length <= 1) {
-        alert('Anda harus memiliki setidaknya satu playlist!');
-        return;
-      }
-      if (confirm('Hapus playlist ini beserta seluruh lagunya?')) {
-        const pl = playlists.find(p => p.id === activePlaylistId);
-        if (pl) {
-          pl.songs.forEach(s => deleteAudioFile(s.id));
-        }
-        playlists = playlists.filter(p => p.id !== activePlaylistId);
-        activePlaylistId = playlists[0].id;
-        saveState();
-        renderSongList();
-      }
-    }
-
-    function renderPlaylists() {
-      const container = document.getElementById('sidebar-playlists');
-      container.innerHTML = playlists.map(pl => `
-        <button onclick="selectPlaylist('${pl.id}')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition flex items-center justify-between ${pl.id === activePlaylistId ? 'bg-purple-500/20 text-purple-300 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}">
-          <span class="truncate">${pl.name}</span>
-          <span class="text-[10px] opacity-60">${pl.songs.length}</span>
-        </button>
-      `).join('');
-    }
-
-    function selectPlaylist(id) {
-      activePlaylistId = id;
-      renderPlaylists();
-      renderSongList();
-    }
-
-    async function handleAudioUpload(event) {
-      const files = event.target.files;
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl) return;
-
-      for (let file of files) {
-        const songId = 'song_' + Date.now() + Math.random();
-        await storeAudioFile(songId, file);
-
-        pl.songs.push({
-          id: songId,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-          type: 'local'
+    audioUpload.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length > 0) {
+        songList.innerHTML = ''; // Bersihkan contoh lagu
+        files.forEach((file, index) => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-zinc-800/50 transition cursor-pointer';
+          row.innerHTML = `
+            <td class="py-3.5 px-4 text-center text-zinc-400">${index + 1}</td>
+            <td class="py-3.5 px-4 font-medium text-zinc-100">${file.name}</td>
+            <td class="py-3.5 px-4 hidden sm:table-cell text-zinc-400 text-xs">File Lokal</td>
+            <td class="py-3.5 px-4 text-right text-zinc-400">--:--</td>
+          `;
+          row.onclick = () => {
+            nowPlayingTitle.textContent = file.name;
+          };
+          songList.appendChild(row);
         });
       }
-
-      saveState();
-      renderSongList();
-      event.target.value = '';
-    }
-
-    function renderSongList() {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      document.getElementById('current-playlist-title').innerText = pl ? pl.name : '';
-      document.getElementById('playlist-stats').innerText = `${pl ? pl.songs.length : 0} Lagu • Hanya mengulang lagu di playlist ini`;
-
-      const container = document.getElementById('song-list');
-      if (!pl || pl.songs.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-gray-500 text-xs">Belum ada lagu di playlist ini. Klik "Tambah Lagu (Laptop)" untuk menambahkan.</div>`;
-        return;
-      }
-
-      container.innerHTML = pl.songs.map((song, idx) => `
-        <div class="grid grid-cols-12 gap-4 px-6 py-3.5 text-sm items-center hover:bg-white/5 transition group cursor-pointer ${currentSongIndex === idx ? 'bg-purple-500/10 text-purple-300' : 'text-gray-300'}" onclick="playSongIndex(${idx})">
-          <div class="col-span-1 text-xs text-gray-500">${idx + 1}</div>
-          <div class="col-span-6 font-medium truncate flex items-center gap-3">
-            <i data-lucide="music" class="w-4 h-4 text-gray-500 group-hover:text-purple-400"></i>
-            <span class="truncate">${song.title}</span>
-          </div>
-          <div class="col-span-3 text-xs text-gray-500">${song.size || 'Remote'}</div>
-          <div class="col-span-2 text-right">
-            <button onclick="event.stopPropagation(); removeSong('${song.id}')" class="p-1 text-gray-500 hover:text-red-400 rounded transition">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
-      lucide.createIcons();
-    }
-
-    function removeSong(songId) {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl) return;
-      deleteAudioFile(songId);
-      pl.songs = pl.songs.filter(s => s.id !== songId);
-      saveState();
-      renderSongList();
-    }
-
-    async function playSongIndex(index) {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl || !pl.songs[index]) return;
-
-      currentSongIndex = index;
-      const song = pl.songs[index];
-
-      let audioSrc = song.url;
-      if (song.type === 'local') {
-        const fileData = await getAudioFile(song.id);
-        if (fileData) {
-          audioSrc = URL.createObjectURL(fileData);
-        } else {
-          alert('Berkas audio tidak ditemukan di memori laptop. Sila unggah ulang.');
-          return;
-        }
-      }
-
-      audio.src = audioSrc;
-      audio.play().catch(() => {});
-
-      document.getElementById('player-song-title').innerText = song.title;
-      document.getElementById('player-playlist-name').innerText = pl.name;
-      updatePlayButtonUI(true);
-      renderSongList();
-    }
-
-    function togglePlayPause() {
-      if (!audio.src) {
-        if (playlists.find(p => p.id === activePlaylistId)?.songs.length > 0) {
-          playSongIndex(0);
-        }
-        return;
-      }
-
-      if (audio.paused) {
-        audio.play();
-        updatePlayButtonUI(true);
-      } else {
-        audio.pause();
-        updatePlayButtonUI(false);
-      }
-    }
-
-    function updatePlayButtonUI(isPlaying) {
-      const btn = document.getElementById('btn-play');
-      btn.innerHTML = isPlaying ? `<i data-lucide="pause" class="w-5 h-5 fill-black"></i>` : `<i data-lucide="play" class="w-5 h-5 fill-black ml-0.5"></i>`;
-      lucide.createIcons();
-    }
-
-    function playNextSong() {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl || pl.songs.length === 0) return;
-
-      if (isShuffle) {
-        currentSongIndex = Math.floor(Math.random() * pl.songs.length);
-      } else {
-        currentSongIndex = (currentSongIndex + 1) % pl.songs.length;
-      }
-      playSongIndex(currentSongIndex);
-    }
-
-    function playPrevSong() {
-      const pl = playlists.find(p => p.id === activePlaylistId);
-      if (!pl || pl.songs.length === 0) return;
-
-      currentSongIndex = (currentSongIndex - 1 + pl.songs.length) % pl.songs.length;
-      playSongIndex(currentSongIndex);
-    }
-
-    function setupAudioListeners() {
-      audio.ontimeupdate = () => {
-        if (!audio.duration) return;
-        const current = audio.currentTime;
-        const duration = audio.duration;
-        document.getElementById('seek-bar').value = (current / duration) * 100;
-        document.getElementById('time-current').innerText = formatTime(current);
-        document.getElementById('time-duration').innerText = formatTime(duration);
-      };
-
-      audio.onended = () => {
-        playNextSong();
-      };
-    }
-
-    function seekAudio(value) {
-      if (audio.duration) {
-        audio.currentTime = (value / 100) * audio.duration;
-      }
-    }
-
-    function setVolume(value) {
-      audio.volume = value / 100;
-    }
-
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = Math.floor(seconds % 60);
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function updateConvertPlaylistSelect() {
-      const select = document.getElementById('convert-playlist-select');
-      select.innerHTML = playlists.map(pl => `<option value="${pl.id}">${pl.name}</option>`).join('');
-    }
-
-    function processConvert() {
-      const url = document.getElementById('convert-url-input').value.trim();
-      const title = document.getElementById('convert-title-input').value.trim() || 'Converted Song ' + new Date().toLocaleTimeString();
-      const targetPlId = document.getElementById('convert-playlist-select').value;
-      const statusDiv = document.getElementById('convert-status');
-
-      if (!url) {
-        alert('Masukkan tautan audio terlebih dahulu!');
-        return;
-      }
-
-      statusDiv.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/20', 'text-red-300');
-      statusDiv.classList.add('bg-purple-500/10', 'border-purple-500/20', 'text-purple-300');
-      statusDiv.innerText = 'Memproses konversi dan mengunduh audio...';
-
-      setTimeout(() => {
-        const targetPl = playlists.find(p => p.id === targetPlId);
-        if (targetPl) {
-          targetPl.songs.push({
-            id: 'converted_' + Date.now(),
-            title: title,
-            size: 'MP3 Link',
-            url: url,
-            type: 'remote'
-          });
-          saveState();
-          statusDiv.innerText = `Berhasil dikonversi & ditambahkan ke playlist "${targetPl.name}"!`;
-          document.getElementById('convert-url-input').value = '';
-          document.getElementById('convert-title-input').value = '';
-        }
-      }, 1500);
-    }
+    });
   </script>
 </body>
 </html>
